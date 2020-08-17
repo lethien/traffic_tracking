@@ -7,15 +7,6 @@ import json
 import pathlib
 from tqdm import tqdm
 
-def update_track_dict(track_dict, trackers, frame_id):
-    for left, top, right, bottom, track_id, obj_class in trackers:
-        track_id = int(track_id)
-        if track_id not in track_dict.keys():
-            track_dict[track_id] = [(left, top, right, bottom, obj_class, frame_id)]
-        else:
-            track_dict[track_id].append((left, top, right, bottom, obj_class, frame_id))
-
-
 def get_videos(input_dir):
     video_paths = []
     for r, d, f in os.walk(input_dir):
@@ -24,40 +15,6 @@ def get_videos(input_dir):
                 video_paths.append(os.path.join(r, file))
     
     return video_paths
-
-def extract_frames_from_video(video_path, output_dir, time_stride = 1):    
-    video_frame_dir_path = os.path.join(output_dir, os.path.splitext(os.path.basename(video_path))[0])
-
-    vid_cap = cv2.VideoCapture(video_path)
-    num_frms, original_fps = int(vid_cap.get(cv2.CAP_PROP_FRAME_COUNT)), vid_cap.get(cv2.CAP_PROP_FPS)
-
-    if not os.path.isdir(video_frame_dir_path):
-        os.makedirs(video_frame_dir_path)
-    else:
-        frames_files = os.listdir(video_frame_dir_path)
-        number_files = len(frames_files)
-        if number_files != int(num_frms / time_stride):
-            for file_object in frames_files:
-                file_object_path = os.path.join(video_frame_dir_path, file_object)
-                os.unlink(file_object_path)
-
-            for frm_id in tqdm(range(0, num_frms, time_stride)):
-                vid_cap.set(cv2.CAP_PROP_POS_FRAMES, frm_id)
-                _, im = vid_cap.read()
-                frame_img = os.path.join(video_frame_dir_path, str(frm_id) + '.jpg')
-                cv2.imwrite(frame_img, im)
-    
-    vid_cap.release()
-    
-    frame_files = []
-    
-    for dirpath,_,filenames in os.walk(video_frame_dir_path):
-        for f in filenames:
-            frame_files.append(os.path.abspath(os.path.join(video_frame_dir_path, f)))
-    
-    frame_files.sort(key=os.path.getctime)
-    
-    return frame_files
 
 def extract_video_info(video_path, info_dir):
     video_frame_dir_path = os.path.join(info_dir, os.path.splitext(os.path.basename(video_path))[0] + ".json")

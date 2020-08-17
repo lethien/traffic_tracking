@@ -8,9 +8,9 @@ from six import BytesIO
 
 def resize_image(image, new_width=256, new_height=256):
     pil_image = Image.fromarray(np.uint8(image)).convert("RGB")
-    pil_image = ImageOps.fit(image, (new_width, new_height), Image.ANTIALIAS)
-    np.copyto(image, np.array(pil_image))    
-    return image
+    pil_image = ImageOps.fit(pil_image, (new_width, new_height), Image.ANTIALIAS)
+      
+    return np.array(pil_image)
 
 def draw_roi_on_image(image, pts, thickness=4, color='#ff0000'):
     pil_image = Image.fromarray(np.uint8(image)).convert("RGB")
