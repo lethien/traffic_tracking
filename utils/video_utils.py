@@ -5,15 +5,15 @@ import os
 import cv2
 import json
 import pathlib
+from tqdm import tqdm
 
-
-def update_track_dict(track_dict, trackers, frame_id, obj_class):
-    for left, top, right, bottom, track_id in trackers:
+def update_track_dict(track_dict, trackers, frame_id):
+    for left, top, right, bottom, track_id, obj_class in trackers:
         track_id = int(track_id)
         if track_id not in track_dict.keys():
-            track_dict[track_id] = {'class': obj_class, 'path': [(left, top, right, bottom, frame_id)]}
+            track_dict[track_id] = [(left, top, right, bottom, obj_class, frame_id)]
         else:
-            track_dict[track_id]['path'].append((left, top, right, bottom, frame_id))
+            track_dict[track_id].append((left, top, right, bottom, obj_class, frame_id))
 
 
 def get_videos(input_dir):

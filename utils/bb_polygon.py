@@ -113,7 +113,7 @@ def check_bbox_intersect_polygon(polygon, bbox):
     return is_bounding_box_intersect(bb, polygon)
 
 
-def change_detections_to_image_coordinates(detections, roi, im_width, im_height, obj_classes, min_score=0.3):
+def change_detections_to_image_coordinates(detections, roi, im_width, im_height, min_score=0.3):
     # change detection box to real image's coordinates
     boxes = detections['detection_boxes']
     scores = detections['detection_scores']
@@ -123,11 +123,10 @@ def change_detections_to_image_coordinates(detections, roi, im_width, im_height,
     
     for bb, s, c in zip(boxes, scores, classes):
         ymin, xmin, ymax, xmax = bb
-        left, top, right, bottom = xmin*im_width, ymin*im_height, xmax*im_width, ymax*im_height  
-        if (c+1) in obj_classes: # check if the detection is about desired classes
-            if s >= min_score: # check if the detection is certain to an extend
-                if check_bbox_intersect_polygon(roi, (left, top, right, bottom)): # check if the bbox is in ROI                
-                    dets.append((left, top, right, bottom, s))
+        left, top, right, bottom = xmin*im_width, ymin*im_height, xmax*im_width, ymax*im_height          
+        if s >= min_score: # check if the detection is certain to an extend
+            if check_bbox_intersect_polygon(roi, (left, top, right, bottom)): # check if the bbox is in ROI                
+                dets.append((left, top, right, bottom, s, (c+1)))
 
     dets = np.array(dets)
     
