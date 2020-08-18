@@ -65,7 +65,8 @@ def video_object_dectection(video_path, detect_fn, category_index, roi,
                                                   [category_index[i+1]['name'] for i in detections['detection_classes']], detections['detection_scores'],
                                                  max_boxes=100, min_score=0.3)
             out.write(image_np_with_detections)
-
+    
+    vid_cap.release()
     if output_to_video:
         out.release()
 
@@ -110,7 +111,8 @@ def video_object_dectection_and_tracking(video_path, detect_fn, tracker, categor
             image_np_with_detections = draw_roi_on_image(frame,roi)
             image_np_with_detections = draw_boxes_and_lines(image_np_with_detections, tracked_objects, track_dict, category_index)
             out.write(image_np_with_detections[:, :, ::-1])                
-
+    
+    vid_cap.release()
     if output_to_video:
         out.release()
     
