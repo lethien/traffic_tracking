@@ -30,8 +30,7 @@ def object_detect_image(image, detect_fn):
     return detections
 
 
-def video_object_dectection(video_path, detect_fn, category_index,
-                                         zone_info_dir, 
+def video_object_dectection(video_path, detect_fn, category_index, roi, 
                                          video_output_dir, output_to_video = False,
                                          from_frame = 0, to_frame = None, time_stride = 1):       
     roi, mois = extract_video_info(video_path, zone_info_dir)
@@ -73,14 +72,11 @@ def video_object_dectection(video_path, detect_fn, category_index,
         out.release()
 
 
-def video_object_dectection_and_tracking(video_path, detect_fn, tracker, category_index,
-                                         zone_info_dir, 
+def video_object_dectection_and_tracking(video_path, detect_fn, tracker, category_index, roi, 
                                          video_output_dir, output_to_video = False,
                                          from_frame = 0, to_frame = None, time_stride = 1):   
     track_dict = {}
 
-    roi, mois = extract_video_info(video_path, zone_info_dir)
-    
     vid_cap = cv2.VideoCapture(video_path)
     num_frms, original_fps = int(vid_cap.get(cv2.CAP_PROP_FRAME_COUNT)), vid_cap.get(cv2.CAP_PROP_FPS)
 
