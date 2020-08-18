@@ -33,8 +33,6 @@ def object_detect_image(image, detect_fn):
 def video_object_dectection(video_path, detect_fn, category_index, roi, 
                                          video_output_dir, output_to_video = False,
                                          from_frame = 0, to_frame = None, time_stride = 1):       
-    roi, mois = extract_video_info(video_path, zone_info_dir)
-
     vid_cap = cv2.VideoCapture(video_path)
     num_frms, original_fps = int(vid_cap.get(cv2.CAP_PROP_FRAME_COUNT)), vid_cap.get(cv2.CAP_PROP_FPS)
 
@@ -47,7 +45,7 @@ def video_object_dectection(video_path, detect_fn, category_index, roi,
         output_file = os.path.join(video_output_dir, os.path.splitext(os.path.basename(video_path))[0] + '.mp4')
         if os.path.exists(output_file):
             os.remove(output_file)
-        out = cv2.VideoWriter(output_file,cv2.VideoWriter_fourcc(*'DIVX'), original_fps, size)
+        out = cv2.VideoWriter(output_file,cv2.VideoWriter_fourcc(*'DIVX'), int(original_fps/time_stride), size)
     
     frames_to_look = range(min(from_frame, num_frms), 
                            min(to_frame, num_frms) if to_frame is not None else num_frms, 
@@ -74,7 +72,7 @@ def video_object_dectection(video_path, detect_fn, category_index, roi,
 
 def video_object_dectection_and_tracking(video_path, detect_fn, tracker, category_index, roi, 
                                          video_output_dir, output_to_video = False,
-                                         from_frame = 0, to_frame = None, time_stride = 1):   
+                                         from_frame = 0, to_frame = None, time_stride = 1, min_score=0.3):   
     track_dict = {}
 
     vid_cap = cv2.VideoCapture(video_path)
@@ -89,7 +87,7 @@ def video_object_dectection_and_tracking(video_path, detect_fn, tracker, categor
         output_file = os.path.join(video_output_dir, os.path.splitext(os.path.basename(video_path))[0] + '_with_tracking.mp4')
         if os.path.exists(output_file):
             os.remove(output_file)
-        out = cv2.VideoWriter(output_file,cv2.VideoWriter_fourcc(*'DIVX'), original_fps, size)
+        out = cv2.VideoWriter(output_file,cv2.VideoWriter_fourcc(*'DIVX'), int(original_fps/time_stride), size)
     
     frames_to_look = range(min(from_frame, num_frms), 
                            min(to_frame, num_frms) if to_frame is not None else num_frms, 
@@ -102,7 +100,7 @@ def video_object_dectection_and_tracking(video_path, detect_fn, tracker, categor
         detections = object_detect_image(frame, detect_fn) 
        
         # update SORT trackers         
-        dets = change_detections_to_image_coordinates(detections, roi, width, height, min_score=0.2)
+        dets = change_detections_to_image_coordinates(detections, roi, width, height, min_score)
         tracked_objects = []
         if len(dets) > 0:
             tracked_objects = tracker.update(dets)
