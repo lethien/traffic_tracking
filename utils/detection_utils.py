@@ -73,7 +73,7 @@ def video_object_dectection(video_path, detect_fn, category_index, roi,
 
 def video_object_dectection_and_tracking(video_path, detect_fn, tracker, category_index, roi, 
                                          video_output_dir, output_to_video = False,
-                                         from_frame = 0, to_frame = None, time_stride = 1, min_score=0.3):   
+                                         from_frame = 0, to_frame = None, time_stride = 1, min_score=0.3, max_iou=0.7):   
     track_dict = {}
 
     vid_cap = cv2.VideoCapture(video_path)
@@ -101,7 +101,7 @@ def video_object_dectection_and_tracking(video_path, detect_fn, tracker, categor
         detections = object_detect_image(frame, detect_fn) 
        
         # update SORT trackers         
-        dets = change_detections_to_image_coordinates(detections, roi, width, height, min_score)
+        dets = change_detections_to_image_coordinates(detections, roi, width, height, min_score, max_iou)
         tracked_objects = []
         if len(dets) > 0:
             tracked_objects = tracker.update(dets)

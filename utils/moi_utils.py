@@ -15,9 +15,10 @@ def get_obj_class_4types(obj_cls):
 def get_motion_vector_of_trackers(track_dict):
     motion_vector_list = []
     for tracker_id, tracker_list in track_dict.items():
-        if len(tracker_list) > 1:
-            last = tracker_list[-1]
-            obj_cls = get_obj_class_4types(last[4])
+        if len(tracker_list) > 2:
+            last = tracker_list[-1]            
+            cls_vals, cls_counts = np.unique(np.array(tracker_list)[:,4], return_counts=True)
+            obj_cls = get_obj_class_4types(cls_vals[np.argmax(cls_counts)])
             if obj_cls is not None:    
                 last_frame_id = last[5]
                 motion_vector_list.append((tracker_list, obj_cls, last_frame_id))
