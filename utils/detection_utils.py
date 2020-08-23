@@ -14,7 +14,28 @@ from video_utils import *
 from img_utils import *
 from bb_polygon import *
 
-def object_detect_image(image, detect_fn):
+def get_video_background(video_path):
+    vid_cap = cv2.VideoCapture(video_path)
+    
+    extracted_frames = []
+    frames_to_look = range(0, 
+                           200, 
+                           5)    
+    for frame_id in frames_to_look:  
+        vid_cap.set(cv2.CAP_PROP_POS_FRAMES, frame_id)
+        _, frame = vid_cap.read()
+        
+        extracted_frames.append(frame)
+        
+    vid_cap.release()
+    
+    sequence = np.stack(extracted_frames, axis=3)
+
+    result = np.median(sequence, axis=3)
+    
+    return result
+
+def object_detect_image(image, detect_fn):    
     input_tensor = tf.convert_to_tensor(np.expand_dims(image.astype(np.uint8), 0), dtype=tf.float32)
 
     detections = detect_fn(input_tensor)
@@ -23,24 +44,21 @@ def object_detect_image(image, detect_fn):
     detections = {key: value[0, :num_detections].numpy()
                   for key, value in detections.items()}
     detections['num_detections'] = num_detections
-
-    # detection_classes should be ints.
     detections['detection_classes'] = detections['detection_classes'].astype(np.int64)
     
     return detections
 
 
-def video_object_dectection(video_path, detect_fn, category_index, roi, 
+def video_object_dectection(video_path, detect_fn, frame_preprocess_fn, category_index, roi, 
                                          video_output_dir, output_to_video = False,
                                          from_frame = 0, to_frame = None, time_stride = 1):       
     vid_cap = cv2.VideoCapture(video_path)
     num_frms, original_fps = int(vid_cap.get(cv2.CAP_PROP_FRAME_COUNT)), vid_cap.get(cv2.CAP_PROP_FPS)
 
-    vid_cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-    _, img = vid_cap.read()
-    height, width, layers = img.shape
+    bg_img = get_video_background(video_path)
+    height, width, layers = bg_img.shape
     size = (width,height)
-    
+
     if output_to_video:
         output_file = os.path.join(video_output_dir, os.path.splitext(os.path.basename(video_path))[0] + '.mp4')
         if os.path.exists(output_file):
@@ -54,8 +72,11 @@ def video_object_dectection(video_path, detect_fn, category_index, roi,
         vid_cap.set(cv2.CAP_PROP_POS_FRAMES, frame_id)
         _, frame = vid_cap.read()  
         
+        # Preprocess frame
+        frame_preprocessed = frame_preprocess_fn(frame, video_path, bg_img)
+
         # Get object detection bounding boxes
-        detections = object_detect_image(frame, detect_fn) 
+        detections = object_detect_image(frame_preprocessed, detect_fn) 
         
         if output_to_video:
             # draw ROI and bounding boxes onto frame
@@ -71,7 +92,7 @@ def video_object_dectection(video_path, detect_fn, category_index, roi,
         out.release()
 
 
-def video_object_dectection_and_tracking(video_path, detect_fn, tracker, category_index, roi, 
+def video_object_dectection_and_tracking(video_path, detect_fn, tracker, frame_preprocess_fn, category_index, roi, 
                                          video_output_dir, output_to_video = False,
                                          from_frame = 0, to_frame = None, time_stride = 1, min_score=0.3, max_iou=0.7):   
     track_dict = {}
@@ -79,9 +100,8 @@ def video_object_dectection_and_tracking(video_path, detect_fn, tracker, categor
     vid_cap = cv2.VideoCapture(video_path)
     num_frms, original_fps = int(vid_cap.get(cv2.CAP_PROP_FRAME_COUNT)), vid_cap.get(cv2.CAP_PROP_FPS)
 
-    vid_cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-    _, img = vid_cap.read()
-    height, width, layers = img.shape
+    bg_img = get_video_background(video_path)
+    height, width, layers = bg_img.shape
     size = (width,height)
     
     if output_to_video:
@@ -97,8 +117,11 @@ def video_object_dectection_and_tracking(video_path, detect_fn, tracker, categor
         vid_cap.set(cv2.CAP_PROP_POS_FRAMES, frame_id)
         _, frame = vid_cap.read()
         
+        # Preprocess frame
+        frame_preprocessed = frame_preprocess_fn(frame, video_path, bg_img)
+
         # Get object detection bounding boxes
-        detections = object_detect_image(frame, detect_fn) 
+        detections = object_detect_image(frame_preprocessed, detect_fn) 
        
         # update SORT trackers         
         dets = change_detections_to_image_coordinates(detections, roi, width, height, min_score, max_iou)
